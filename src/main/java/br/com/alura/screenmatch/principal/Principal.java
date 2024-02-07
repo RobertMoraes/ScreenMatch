@@ -4,13 +4,12 @@ import br.com.alura.screenmatch.model.DadosEpisodios;
 import br.com.alura.screenmatch.model.DadosFilmes;
 import br.com.alura.screenmatch.model.DadosSerie;
 import br.com.alura.screenmatch.model.DadosTemporada;
-import br.com.alura.screenmatch.service.ConsumerApiImpl;
-import br.com.alura.screenmatch.service.ConverteDadosImpl;
+import br.com.alura.screenmatch.service.impl.ConsumerApiImpl;
+import br.com.alura.screenmatch.service.impl.ConverteDadosImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
 import java.io.FileWriter;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
