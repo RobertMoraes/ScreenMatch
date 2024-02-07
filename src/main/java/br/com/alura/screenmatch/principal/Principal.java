@@ -1,15 +1,14 @@
 package br.com.alura.screenmatch.principal;
 
-import br.com.alura.screenmatch.model.DadosEpisodios;
-import br.com.alura.screenmatch.model.DadosFilmes;
-import br.com.alura.screenmatch.model.DadosSerie;
-import br.com.alura.screenmatch.model.DadosTemporada;
+import br.com.alura.screenmatch.model.*;
 import br.com.alura.screenmatch.service.impl.ConsumerApiImpl;
 import br.com.alura.screenmatch.service.impl.ConverteDadosImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
 import java.io.FileWriter;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -77,6 +76,29 @@ public class Principal {
                     .limit(5)
                     .forEach(System.out::println);
 
+            List<Episodio> episodios = lsDadosTemporada.stream()
+                    .flatMap(k -> k.episodios().stream()
+                            .map(d -> new Episodio(k.numero(), d)))
+                    .collect(Collectors.toList());
+
+            episodios.forEach(System.out::println);
+
+            System.out.println("A partir de qual ano deseja exibir os episodios? ");
+            var ano = teclado.nextInt();
+            teclado.nextLine();
+
+            LocalDate dataBusca = LocalDate.of(ano, 1, 1);
+
+            DateTimeFormatter dtFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+            episodios.stream()
+                    .filter(e -> e.getDataLancamento() != null &&
+                            e.getDataLancamento().isAfter(dataBusca))
+                    .forEach(e -> System.out.println(
+                            "Temporada: " + e.getTemporada() +
+                            " Episodio: " + e.getNumeroEpisodio() +
+                            " Data de lancamento: " + e.getDataLancamento().format(dtFormatter)
+                    ));
 
         } else {
             DadosFilmes dados = converteDados.converter(json, DadosFilmes.class);
