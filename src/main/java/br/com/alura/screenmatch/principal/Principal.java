@@ -1,109 +1,114 @@
 package br.com.alura.screenmatch.principal;
 
-import br.com.alura.screenmatch.model.*;
+import br.com.alura.screenmatch.model.DadosSerie;
+import br.com.alura.screenmatch.model.DadosTemporada;
+import br.com.alura.screenmatch.model.Episodio;
+import br.com.alura.screenmatch.model.Serie;
+import br.com.alura.screenmatch.repository.SerieRepository;
 import br.com.alura.screenmatch.service.impl.ConsumerApiImpl;
 import br.com.alura.screenmatch.service.impl.ConverteDadosImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 
 import java.io.FileWriter;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class Principal {
+
     private final Scanner teclado = new Scanner(System.in);
     private final ConsumerApiImpl consumerApi = new ConsumerApiImpl();
     private final ConverteDadosImpl converteDados = new ConverteDadosImpl();
-
     private ObjectMapper objectMapper = new ObjectMapper();
-    private final String ENDERECO_API = "https://www.omdbapi.com/?t=";
-    private final String API_KEY = "&apikey=92860590";
+    private List<DadosSerie> dadosSeries = new ArrayList<>();
+    private SerieRepository repository;
+    private List<Serie> series;
+
+    public Principal(SerieRepository repository) {
+        this.repository = repository;
+    }
 
     public void exibeMenu() {
+        var opcao = -1;
+        while (opcao != 0) {
+            var menu = """
+                        1 - Buscar Séries
+                        2 - Buscar Episodios
+                        3 - Listar Seíries
+                        0 - Sair
+                    """;
+            System.out.println(menu);
+            opcao = teclado.nextInt();
+            teclado.nextLine();
+            switch (opcao) {
+                case 1 -> this.buscaSeries();
+                case 2 -> this.buscaEpisodios();
+                case 3 -> this.listarSeriesBuscadas();
+                case 0 -> System.out.println("Saindo...");
+                default -> System.out.println("Opcão inválida");
+            }
+        }
+
+
+    }
+
+    private void buscaSeries() {
+        DadosSerie dados = getDadosSerie();
+        Serie serie = new Serie(dados);
+        repository.save(serie);
+        System.out.println(dados);
+    }
+
+    private DadosSerie getDadosSerie() {
         String outputPath = "src/main/resources/output/";
-        System.out.println("Digite o nome da série para buscar: ");
-        var nomeSerie = teclado.nextLine().replaceAll(" ", "+");
-        var json = consumerApi.obterDados(ENDERECO_API + nomeSerie + API_KEY);
-        var tituloArquivo = nomeSerie.replaceAll("\\+", "");
+        System.out.println("Digite o nome da seírie: ");
+        var nomeSerie = teclado.nextLine();
+        var json = consumerApi.obterDados(System.getenv("API_KEY") + nomeSerie.replaceAll(" ", "+"));
         try {
-            FileWriter escritor = new FileWriter(outputPath + tituloArquivo + "titulo.json");
+            FileWriter escritor = new FileWriter(outputPath + nomeSerie.replaceAll(" ", "_") + "titulo.json");
             escritor.write(json);
             escritor.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
+        DadosSerie dados = converteDados.converter(json, DadosSerie.class);
+        return dados;
+    }
 
-        Map<String, String> map = new HashMap<>();
-        map.putAll(converteDados.converter(json, Map.class));
+    private void buscaEpisodios() {
 
-        if (map.get("Type").equals("series") && !map.get("totalSeasons").equals("N/A")) {
-            DadosSerie dados = converteDados.converter(json, DadosSerie.class);
-            System.out.println("dados: " + dados);
-            List<DadosTemporada> lsDadosTemporada = new ArrayList<>();
-            for (int i = 1; i <= dados.totalTemporadas(); i++) {
-                json = consumerApi.obterDados(ENDERECO_API + nomeSerie + "&season=" + i + API_KEY);
+        listarSeriesBuscadas();
+        System.out.println("Digite o nome da seírie: ");
+        var nomeSerie = teclado.nextLine();
+        Optional<Serie> first = series.stream().filter(s -> s.getTitulo().toLowerCase().contains(nomeSerie.toLowerCase()))
+                .findFirst();
+        if (first.isPresent()) {
+            var serieEncontrada = first.get();
+            List<DadosTemporada> temporadas = new ArrayList<>();
+
+            for (int i = 1; i <= serieEncontrada.getTotalTemporadas(); i++) {
+                var json = consumerApi.obterDados(System.getenv("API_KEY") + serieEncontrada.getTitulo().replaceAll(" ", "+") + "&Season=" + i);
                 DadosTemporada dadosTemporada = converteDados.converter(json, DadosTemporada.class);
-                lsDadosTemporada.add(dadosTemporada);
+                temporadas.add(dadosTemporada);
             }
-            System.out.println("Lista dados temporada: ");
-            try {
-                objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
-                String jsonConvertido = objectMapper.writeValueAsString(lsDadosTemporada);
-                FileWriter escritor = new FileWriter(outputPath + tituloArquivo + "temporadas.json");
-                escritor.write(jsonConvertido);
-                escritor.close();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            lsDadosTemporada.forEach(System.out::println);
+            temporadas.forEach(System.out::println);
 
-            System.out.println("Episodios: ");
-            lsDadosTemporada.forEach(t -> t.episodios().forEach(e -> System.out.println(e.titulo())));
-
-            List<DadosEpisodios> dadosEpisodios = lsDadosTemporada.stream()
-                    .flatMap(k -> k.episodios().stream())
+            List<Episodio> episodios = temporadas.stream()
+                    .flatMap(t -> t.episodios().stream()
+                            .map(e -> new Episodio(t.numero(), e)))
                     .collect(Collectors.toList());
-
-            System.out.println("Episodios:::::::::::::: ");
-            dadosEpisodios.forEach(System.out::println);
-
-            System.out.println("Episodios::::::::::::::TOP 5");
-            dadosEpisodios.stream()
-                    .filter(e -> !e.avaliacao().equalsIgnoreCase("N/A"))
-                    .sorted(Comparator.comparing(DadosEpisodios::avaliacao).reversed())
-                    .limit(5)
-                    .forEach(System.out::println);
-
-            List<Episodio> episodios = lsDadosTemporada.stream()
-                    .flatMap(k -> k.episodios().stream()
-                            .map(d -> new Episodio(k.numero(), d)))
-                    .collect(Collectors.toList());
-
-            episodios.forEach(System.out::println);
-
-            System.out.println("A partir de qual ano deseja exibir os episodios? ");
-            var ano = teclado.nextInt();
-            teclado.nextLine();
-
-            LocalDate dataBusca = LocalDate.of(ano, 1, 1);
-
-            DateTimeFormatter dtFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-
-            episodios.stream()
-                    .filter(e -> e.getDataLancamento() != null &&
-                            e.getDataLancamento().isAfter(dataBusca))
-                    .forEach(e -> System.out.println(
-                            "Temporada: " + e.getTemporada() +
-                            " Episodio: " + e.getNumeroEpisodio() +
-                            " Data de lancamento: " + e.getDataLancamento().format(dtFormatter)
-                    ));
-
+            serieEncontrada.setEpisodios(episodios);
+            repository.save(serieEncontrada);
         } else {
-            DadosFilmes dados = converteDados.converter(json, DadosFilmes.class);
-            System.out.println(dados);
+            System.out.println("Seírie não encontrada");
         }
 
     }
+
+    private void listarSeriesBuscadas() {
+        series = repository.findAll();
+        series.stream()
+                .sorted(Comparator.comparing(Serie::getGenero))
+                .forEach(System.out::println);
+    }
+
 }
