@@ -34,6 +34,7 @@ public class Principal {
                         1 - Buscar Séries
                         2 - Buscar Episodios
                         3 - Listar Seíries
+                        4 - Buscar por Titulo
                         0 - Sair
                     """;
             System.out.println(menu);
@@ -43,6 +44,7 @@ public class Principal {
                 case 1 -> this.buscaSeries();
                 case 2 -> this.buscaEpisodios();
                 case 3 -> this.listarSeriesBuscadas();
+                case 4 -> this.buscaSeriesPorTitulo();
                 case 0 -> System.out.println("Saindo...");
                 default -> System.out.println("Opcão inválida");
             }
@@ -79,8 +81,7 @@ public class Principal {
         listarSeriesBuscadas();
         System.out.println("Digite o nome da seírie: ");
         var nomeSerie = teclado.nextLine();
-        Optional<Serie> first = series.stream().filter(s -> s.getTitulo().toLowerCase().contains(nomeSerie.toLowerCase()))
-                .findFirst();
+        Optional<Serie> first = repository.findByTituloContainingIgnoreCase(nomeSerie);
         if (first.isPresent()) {
             var serieEncontrada = first.get();
             List<DadosTemporada> temporadas = new ArrayList<>();
@@ -109,6 +110,18 @@ public class Principal {
         series.stream()
                 .sorted(Comparator.comparing(Serie::getGenero))
                 .forEach(System.out::println);
+    }
+
+    private void buscaSeriesPorTitulo() {
+        System.out.println("Digite o nome da seírie: ");
+        var nomeSerie = teclado.nextLine();
+        Optional<Serie> serieBuscada = repository.findByTituloContainingIgnoreCase(nomeSerie);
+
+        if (serieBuscada.isPresent()) {
+            System.out.println("Dados da seírie: " + serieBuscada.get());
+        } else {
+            System.out.println("Seírie não encontrada");
+        }
     }
 
 }
