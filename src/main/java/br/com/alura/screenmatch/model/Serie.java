@@ -15,29 +15,22 @@ public class Serie {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
-
     @Column(unique = true)
     private String titulo;
-
     private Integer totalTemporadas;
-
     private Double avaliacao;
-
     @Enumerated(EnumType.STRING)
     private Categoria genero;
-
     private String atores;
-
     private String poster;
-
     private String sinopse;
-
     @OneToMany(mappedBy = "serie", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<Episodio> episodios = new ArrayList<>();
 
     public Serie() {
 
     }
+
     public Serie(DadosSerie dadosSerie) {
         this.titulo = dadosSerie.titulo();
         this.totalTemporadas = dadosSerie.totalTemporadas();

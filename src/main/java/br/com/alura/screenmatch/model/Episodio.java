@@ -33,15 +33,13 @@ public class Episodio {
         }
         try {
             this.dataLancamento = LocalDate.parse(dadosEpisodios.dataLancamento());
-        }catch (DateTimeParseException e) {
+        } catch (DateTimeParseException e) {
             this.dataLancamento = LocalDate.now();
         }
     }
 
     public Episodio() {
-
     }
-
 
     public UUID getId() {
         return id;
