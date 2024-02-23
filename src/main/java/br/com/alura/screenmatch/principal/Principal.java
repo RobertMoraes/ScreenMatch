@@ -49,8 +49,6 @@ public class Principal {
                 default -> System.out.println("Opcão inválida");
             }
         }
-
-
     }
 
     private void buscaSeries() {
