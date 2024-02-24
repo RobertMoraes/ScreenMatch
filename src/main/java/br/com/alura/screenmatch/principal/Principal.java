@@ -1,5 +1,6 @@
 package br.com.alura.screenmatch.principal;
 
+import br.com.alura.screenmatch.enums.Categoria;
 import br.com.alura.screenmatch.model.DadosSerie;
 import br.com.alura.screenmatch.model.DadosTemporada;
 import br.com.alura.screenmatch.model.Episodio;
@@ -35,6 +36,9 @@ public class Principal {
                         2 - Buscar Episodios
                         3 - Listar Seíries
                         4 - Buscar por Titulo
+                        5 - Buscar serie por ator
+                        6 - Top 5 seíries
+                        7 - Buscar por genero
                         0 - Sair
                     """;
             System.out.println(menu);
@@ -45,6 +49,9 @@ public class Principal {
                 case 2 -> this.buscaEpisodios();
                 case 3 -> this.listarSeriesBuscadas();
                 case 4 -> this.buscaSeriesPorTitulo();
+                case 5 -> this.buscarSeriesPorAtor();
+                case 6 -> this.topCincoSeries();
+                case 7 -> this.buscarSeriesPorGenero();
                 case 0 -> System.out.println("Saindo...");
                 default -> System.out.println("Opcão inválida");
             }
@@ -122,4 +129,27 @@ public class Principal {
         }
     }
 
+    private void buscarSeriesPorAtor() {
+        System.out.println("Digite o nome do ator: ");
+        var nomeAtor = teclado.nextLine();
+        System.out.println("Digite a avaliação: ");
+        var avaliacao = teclado.nextDouble();
+        List<Serie> seriesEncontradas = repository.findByAtoresContainingIgnoreCaseAndAvaliacaoGreaterThanEqual(nomeAtor, avaliacao);
+        System.out.println("Seíries em que "+ nomeAtor + " trabalhou: ");
+        seriesEncontradas.forEach(serie -> System.out.println(serie.getTitulo() + " - " + serie.getGenero() + " - " + serie.getAvaliacao()));
+    }
+
+    private void topCincoSeries() {
+        List<Serie> topCincoSeries = repository.findTop5ByOrderByAvaliacaoDesc();
+        topCincoSeries.forEach(serie -> System.out.println(serie.getTitulo() + " - " + serie.getGenero() + " - " + serie.getAvaliacao()));
+    }
+
+    private void buscarSeriesPorGenero() {
+        System.out.println("Selecione o genero: ");
+        var nomeGenero = teclado.nextLine();
+        Categoria categoria = Categoria.fromPortugues(nomeGenero);
+        List<Serie> seriesPorGenero = repository.findByGenero(categoria);
+        System.out.println("Seíries do genero " + nomeGenero);
+        seriesPorGenero.forEach(System.out::println);
+    }
 }
