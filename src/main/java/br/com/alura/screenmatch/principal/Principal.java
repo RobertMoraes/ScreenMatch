@@ -39,6 +39,8 @@ public class Principal {
                         5 - Buscar serie por ator
                         6 - Top 5 seíries
                         7 - Buscar por genero
+                        8 - Filtrar séries
+                        9 - Filtrar episódio
                         0 - Sair
                     """;
             System.out.println(menu);
@@ -52,6 +54,8 @@ public class Principal {
                 case 5 -> this.buscarSeriesPorAtor();
                 case 6 -> this.topCincoSeries();
                 case 7 -> this.buscarSeriesPorGenero();
+                case 8 -> this.buscarSeriesPorFiltro();
+                case 9 -> this.buscarEpisodioPorTrecho();
                 case 0 -> System.out.println("Saindo...");
                 default -> System.out.println("Opcão inválida");
             }
@@ -151,5 +155,26 @@ public class Principal {
         List<Serie> seriesPorGenero = repository.findByGenero(categoria);
         System.out.println("Seíries do genero " + nomeGenero);
         seriesPorGenero.forEach(System.out::println);
+    }
+
+
+    private void buscarSeriesPorFiltro() {
+        System.out.println("Filtrar séries até quantas temporadas? ");
+        int totalTemporadas = Integer.parseInt(teclado.nextLine());
+        System.out.println("Com avaliação a partir de que valor? ");
+        double avaliacao = Double.parseDouble(teclado.nextLine());
+//        List<Serie> filtroSeries = repository.findByTotalTemporadasLessThanEqualAndAvaliacaoGreaterThanEqual(totalTemporadas, avaliacao);
+        List<Serie> filtroSeries = repository.seriesPorTemporadaEAvaliacao(totalTemporadas, avaliacao);
+        System.out.println("*** Séries filtradas ***");
+        filtroSeries.forEach(s ->
+                System.out.println(s.getTitulo() + "  - avaliação: " + s.getAvaliacao()));
+    }
+
+    private void buscarEpisodioPorTrecho() {
+        System.out.println("Digite o nome do episódio para busca? ");
+        var trechoEpisodio = teclado.nextLine();
+        List<Episodio> lsRetornoEpisodios = repository.episodiosPorTrecho(trechoEpisodio);
+        lsRetornoEpisodios.forEach(e -> System.out.printf("Série: %s ::: Temporada %s - Episódio %s - %s\n",
+                e.getSerie().getTitulo(), e.getTemporada(), e.getNumeroEpisodio(), e.getTitulo()));
     }
 }
