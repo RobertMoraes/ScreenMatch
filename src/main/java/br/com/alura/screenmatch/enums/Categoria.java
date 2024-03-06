@@ -1,14 +1,14 @@
 package br.com.alura.screenmatch.enums;
 
 public enum Categoria {
-    ACAO("action", "Ação"),
-    DRAMA("drama", "Drama"),
-    COMEDIA("comedy", "Comédia"),
-    ROMANCE("romance", "Romance"),
-    TERROR("horror", "Terror"),
-    INFANTIL("fantasy", "Infantil"),
-    ANIMACAO("animation", "Animação"),
-    CRIME("crime", "Crime");
+    ACAO("action", "ação"),
+    ANIMACAO("animation", "animação"),
+    COMEDIA("comedy", "comédia"),
+    CRIME("crime", "crime"),
+    DRAMA("drama", "drama"),
+    INFANTIL("fantasy", "infantil"),
+    ROMANCE("romance", "romance"),
+    TERROR("horror", "terror");
 
     private final String categoriaOmdb;
 
@@ -30,7 +30,7 @@ public enum Categoria {
 
     public static Categoria fromPortugues(String text) {
         for (Categoria categoria : Categoria.values()) {
-            if (categoria.categoriaPortugues.equalsIgnoreCase(text)) {
+            if (categoria.categoriaPortugues.contentEquals(text)) {
                 return categoria;
             }
         }
